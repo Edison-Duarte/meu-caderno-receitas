@@ -5,7 +5,7 @@ import pandas as pd
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Chef Digital Permanente", page_icon="📖", layout="centered")
 
-# --- FUNÇÕES DO BANCO DE DATAS (SQLite) ---
+# --- FUNÇÕES DO BANCO DE DADOS (SQLite) ---
 def init_db():
     conn = sqlite3.connect('receitas.db')
     c = conn.cursor()
@@ -29,6 +29,14 @@ def listar_receitas():
     conn.close()
     return df
 
+# NOVA FUNÇÃO: Excluir uma receita específica
+def excluir_receita(id_receita):
+    conn = sqlite3.connect('receitas.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM receitas WHERE id = ?", (id_receita,))
+    conn.commit()
+    conn.close()
+
 def excluir_todas():
     conn = sqlite3.connect('receitas.db')
     c = conn.cursor()
@@ -36,14 +44,13 @@ def excluir_todas():
     conn.commit()
     conn.close()
 
-# Inicializa o banco ao abrir o app
+# Inicializa o banco
 init_db()
 
 # --- ESTILO VISUAL ---
 st.markdown("""
     <style>
     .main { background-color: #fffaf0; }
-    .stButton>button { border-radius: 8px; font-weight: bold; }
     .recipe-box {
         padding: 20px;
         border-radius: 15px;
@@ -51,48 +58,45 @@ st.markdown("""
         border: 2px solid #ffccbc;
         margin-bottom: 10px;
     }
+    /* Estilo para o botão de excluir ficar discreto e vermelho */
+    .stButton>button[key^="del_"] {
+        color: #d32f2f;
+        border-color: #d32f2f;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- INTERFACE ---
 st.title("👨‍🍳 Meu Livro de Receitas Eterno")
-st.write("Suas receitas agora ficam salvas mesmo se você fechar o navegador!")
 
-# Sidebar com estatísticas e limpeza
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("📊 Seu Acervo")
+    st.header("📊 Acervo")
     df_atual = listar_receitas()
-    st.metric("Total de Receitas", len(df_atual))
-    
-    if st.button("🚨 Apagar TUDO"):
+    st.metric("Total", len(df_atual))
+    if st.button("🚨 Apagar Tudo"):
         excluir_todas()
-        st.success("Banco de dados limpo!")
         st.rerun()
 
 # --- CADASTRO ---
-with st.expander("➕ Adicionar Nova Receita (Ctrl+V liberado!)", expanded=False):
+with st.expander("➕ Adicionar Nova Receita", expanded=False):
     nome = st.text_input("Nome do Prato")
     c1, c2 = st.columns(2)
     cat = c1.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Fit"])
     tmp = c2.text_input("Tempo", placeholder="Ex: 15 min")
-    cont = st.text_area("Ingredientes e Modo de Preparo", height=200)
+    cont = st.text_area("Ingredientes e Modo de Preparo", height=150)
     
-    if st.button("💾 Salvar Permanentemente"):
+    if st.button("💾 Salvar"):
         if nome and cont:
             salvar_receita(nome, cat, tmp, cont)
-            st.balloons()
-            st.success("Salvo com sucesso no banco de dados!")
+            st.success("Salvo!")
             st.rerun()
-        else:
-            st.error("Preencha o nome e o conteúdo!")
 
 st.divider()
 
 # --- BUSCA E EXIBIÇÃO ---
-busca = st.text_input("🔍 Procurar receita...", placeholder="Digite um nome ou ingrediente")
+busca = st.text_input("🔍 Procurar receita...")
 
 if not df_atual.empty:
-    # Filtro simples usando Pandas
     mask = df_atual['nome'].str.contains(busca, case=False) | df_atual['conteudo'].str.contains(busca, case=False)
     resultados = df_atual[mask]
 
@@ -101,21 +105,29 @@ if not df_atual.empty:
             st.markdown(f"""
             <div class="recipe-box">
                 <h3 style='color: #e64a19; margin-top:0;'>🍴 {row['nome']}</h3>
-                <span style='background:#ffe0b2; padding:3px 8px; border-radius:5px;'>{row['categoria']}</span>
-                <span style='margin-left:10px;'>⏱️ {row['tempo']}</span>
+                <small>{row['categoria']} | ⏱️ {row['tempo']}</small>
             </div>
             """, unsafe_allow_html=True)
             
-            with st.expander("📖 Ver Modo de Preparo"):
+            # Dentro do expander colocamos as opções de ver, baixar e EXCLUIR
+            with st.expander("📖 Detalhes e Opções"):
                 st.write(row['conteudo'])
                 
-                # Botão de Exportar Individual
-                txt_data = f"RECEITA: {row['nome']}\nCAT: {row['categoria']}\n\n{row['conteudo']}"
-                st.download_button(
+                col_btn1, col_btn2 = st.columns([1, 1])
+                
+                # Botão de Download
+                txt_data = f"RECEITA: {row['nome']}\n\n{row['conteudo']}"
+                col_btn1.download_button(
                     label="📥 Baixar TXT",
                     data=txt_data,
                     file_name=f"{row['nome']}.txt",
-                    key=f"btn_{row['id']}"
+                    key=f"dl_{row['id']}"
                 )
+                
+                # BOTÃO DE EXCLUIR INDIVIDUAL
+                if col_btn2.button(f"🗑️ Excluir Receita", key=f"del_{row['id']}"):
+                    excluir_receita(row['id'])
+                    st.toast(f"'{row['nome']}' removida!")
+                    st.rerun()
 else:
-    st.info("Nenhuma receita cadastrada ainda. Vamos cozinhar?")
+    st.info("Nenhuma receita encontrada.")
