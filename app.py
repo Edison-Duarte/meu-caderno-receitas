@@ -6,7 +6,7 @@ from io import BytesIO
 from PIL import Image
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layout="centered")
+st.set_page_config(page_title="Caderno da Marcia", page_icon="🍲", layout="centered")
 
 # --- FUNÇÕES DO BANCO DE DADOS ---
 def init_db():
@@ -54,7 +54,7 @@ def listar_receitas():
 def converter_imagem(img_file):
     if img_file:
         img = Image.open(img_file)
-        img.thumbnail((500, 500)) # Imagem menor para mobile
+        img.thumbnail((500, 500))
         buffer = BytesIO()
         img.save(buffer, format="JPEG", quality=60)
         return base64.b64encode(buffer.getvalue()).decode()
@@ -62,60 +62,70 @@ def converter_imagem(img_file):
 
 init_db()
 
-# --- ESTILO VISUAL ULTRA COMPACTO PARA MOBILE ---
+# --- ESTILO VISUAL "LINHO & OLIVA" (NEUTRO E SOFISTICADO) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #ffe4e1; }
+    /* Fundo creme/linho */
+    .stApp { background-color: #Fdfbf7; }
     
-    /* Título que se ajusta ao celular */
+    /* Título em Grafite */
     .main-title-text { 
-        color: #4a4a4a; 
-        font-family: sans-serif; 
-        font-weight: 800; 
-        font-size: clamp(1.2rem, 5vw, 2.2rem); 
+        color: #333d29; 
+        font-family: 'serif'; 
+        font-weight: 700; 
+        font-size: clamp(1.1rem, 5vw, 1.8rem); 
         text-align: center;
         width: 100%;
         margin: 10px 0;
-        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
-    /* Remove espaços excessivos do Streamlit no Mobile */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
     }
 
-    /* Cards super compactos */
+    /* Cards Brancos com borda Oliva */
     .recipe-card {
         background-color: #ffffff; 
-        padding: 12px; 
-        border-radius: 8px;
-        border-left: 4px solid #d1478a; 
-        margin-bottom: 5px; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 10px 14px; 
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        border-left: 4px solid #6b705c; /* Verde Oliva */
+        margin-bottom: 6px; 
     }
     
     .recipe-card h3 {
-        font-size: 16px !important;
+        font-size: 15px !important;
+        color: #333d29 !important;
         margin: 0 !important;
     }
 
-    /* Botões otimizados para toque */
+    /* Botões Oliva */
     .stButton>button {
         width: 100%;
-        border-radius: 6px !important;
-        background-color: #d1478a !important;
-        height: 40px;
-        font-size: 14px;
-        margin-top: 5px;
+        border-radius: 4px !important;
+        background-color: #6b705c !important;
+        color: #ffffff !important;
+        border: none !important;
+        height: 38px;
+        font-size: 13px;
+        text-transform: uppercase;
     }
 
-    /* Ajuste de Expander para não ocupar tanto espaço */
-    .streamlit-expanderHeader {
-        font-size: 14px !important;
-        padding: 5px 10px !important;
+    /* Inputs neutros */
+    .stTextInput>div>div>input {
+        background-color: #ffffff !important;
+        border: 1px solid #dcdcdc !important;
+    }
+    
+    .category-text {
+        font-size: 9px; 
+        color: #6b705c; 
+        font-weight: bold; 
+        letter-spacing: 0.5px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -124,14 +134,14 @@ st.markdown("""
 st.markdown('<h1 class="main-title-text">Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
-with st.expander("➕ Nova Receita", expanded=False):
-    nome = st.text_input("Nome")
-    cat = st.selectbox("Cat", ["Salgado", "Doce", "Bebida", "Saudável"])
+with st.expander("📝 Nova Receita", expanded=False):
+    nome = st.text_input("Título")
+    cat = st.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Saudável"])
     tempo = st.text_input("Tempo")
-    conteudo = st.text_area("Preparo", height=120)
+    conteudo = st.text_area("Modo de Preparo", height=120)
     foto_upload = st.file_uploader("Foto", type=['jpg', 'png', 'jpeg'])
     
-    if st.button("Salvar Receita"):
+    if st.button("Salvar"):
         if nome and conteudo:
             foto_b64 = converter_imagem(foto_upload)
             salvar_receita(nome, cat, tempo, conteudo, foto_b64)
@@ -149,32 +159,31 @@ if not df.empty:
         rid = row['id']
         
         st.markdown(f"""<div class="recipe-card">
-            <div style='font-size:9px; color:#d1478a; font-weight:bold;'>{row['categoria']} • {row['tempo']}</div>
+            <div class="category-text">{row['categoria']} • {row['tempo']}</div>
             <h3>{row['nome']}</h3>
         </div>""", unsafe_allow_html=True)
 
-        # Botões de ação simplificados
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            with st.expander("📄 Ver"):
+            with st.expander("Ler"):
                 if row['foto']:
                     st.image(base64.b64decode(row['foto']), use_container_width=True)
                 st.write(row['conteudo'])
 
         with col2:
-            with st.expander("✏️ Ed"):
-                e_nome = st.text_input("Nome", value=row['nome'], key=f"en_{rid}")
+            with st.expander("Ed"):
+                e_nome = st.text_input("Título", value=row['nome'], key=f"en_{rid}")
                 e_cont = st.text_area("Preparo", value=row['conteudo'], height=150, key=f"ect_{rid}")
                 e_foto = st.file_uploader("Foto", type=['jpg', 'png'], key=f"ef_{rid}")
-                if st.button("OK", key=f"btn_ed_{rid}"):
+                if st.button("Ok", key=f"btn_ed_{rid}"):
                     nova_foto = converter_imagem(e_foto)
                     atualizar_receita(rid, e_nome, row['categoria'], row['tempo'], e_cont, nova_foto)
                     st.rerun()
 
         with col3:
-            with st.expander("🗑️ Ex"):
-                if st.button("Apagar", key=f"del_{rid}"):
+            with st.expander("Ex"):
+                if st.button("S", key=f"del_{rid}"):
                     excluir_receita(rid)
                     st.rerun()
 else:
