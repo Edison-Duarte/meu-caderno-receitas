@@ -62,56 +62,63 @@ def converter_imagem(img_file):
 
 init_db()
 
-# --- ESTILO DARK MODE OTIMIZADO ---
+# --- ESTILO DARK MODE OTIMIZADO E POSICIONADO ---
 st.markdown("""
     <style>
     /* Fundo Escuro */
-    .stApp { background-color: #121212; color: #E0E0E0; }
-    
-    /* Título Minimalista */
-    .main-title-text { 
-        color: #FFD700; /* Dourado/Cobre */
-        font-family: 'Inter', sans-serif; 
-        font-weight: 700; 
-        font-size: clamp(1rem, 5vw, 1.5rem); 
-        text-align: center;
-        margin: 10px 0;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+    .stApp { 
+        background-color: #121212; 
+        color: #E0E0E0; 
     }
     
-    /* Layout Mobile */
+    /* CORREÇÃO DE POSICIONAMENTO DO TOPO */
     .block-container {
-        padding-top: 0.5rem !important;
-        padding-left: 0.4rem !important;
-        padding-right: 0.4rem !important;
+        padding-top: 3.5rem !important; /* Aumentado para não cortar o título */
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        padding-bottom: 2rem !important;
     }
 
+    /* Título Minimalista Responsivo */
+    .main-title-text { 
+        color: #FFD700; 
+        font-family: 'Inter', sans-serif; 
+        font-weight: 700; 
+        font-size: clamp(1.1rem, 5.5vw, 1.6rem); 
+        text-align: center;
+        margin-bottom: 25px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        display: block;
+        width: 100%;
+    }
+    
     /* Cards Dark */
     .recipe-card {
         background-color: #1E1E1E; 
-        padding: 12px; 
-        border-radius: 6px;
+        padding: 14px; 
+        border-radius: 8px;
         border: 1px solid #333;
         border-left: 4px solid #FFD700;
-        margin-bottom: 8px; 
+        margin-bottom: 10px; 
     }
     
     .recipe-card h3 {
-        font-size: 14px !important;
+        font-size: 15px !important;
         color: #FFFFFF !important;
-        margin: 2px 0 !important;
+        margin: 4px 0 !important;
     }
 
-    /* Botões Escuros com Borda Dourada */
+    /* Botões Escuros */
     .stButton>button {
         width: 100%;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         background-color: transparent !important;
         color: #FFD700 !important;
         border: 1px solid #FFD700 !important;
-        height: 35px;
-        font-size: 12px;
+        height: 42px; /* Maior para facilitar o toque */
+        font-size: 13px;
+        font-weight: bold;
         text-transform: uppercase;
     }
     
@@ -120,22 +127,23 @@ st.markdown("""
         color: #121212 !important;
     }
 
-    /* Inputs Dark */
-    input, textarea, select {
-        background-color: #252525 !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-    
+    /* Estilo para inputs e textos */
     .category-text {
-        font-size: 8px; 
+        font-size: 10px; 
         color: #888; 
         font-weight: bold; 
         text-transform: uppercase;
     }
-    
-    /* Esconder elementos desnecessários no mobile */
+
+    /* Ajuste para Expander no Mobile */
+    .streamlit-expanderHeader {
+        background-color: #252525 !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+    }
+
     footer {display:none !important;}
+    #MainMenu {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -144,14 +152,14 @@ st.markdown('<h1 class="main-title-text">Caderno de Receitas da Marcia</h1>', un
 
 # --- CADASTRO ---
 with st.expander("🆕 ADICIONAR RECEITA", expanded=False):
-    nome = st.text_input("Título")
+    nome = st.text_input("Nome do Prato")
     c1, c2 = st.columns(2)
-    cat = c1.selectbox("Tipo", ["Salgado", "Doce", "Bebida", "Saudável"])
-    tempo = c2.text_input("Tempo")
-    conteudo = st.text_area("Preparo", height=120)
+    cat = c1.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Saudável"])
+    tempo = c2.text_input("Tempo (ex: 30m)")
+    conteudo = st.text_area("Ingredientes e Preparo", height=150)
     foto_upload = st.file_uploader("Foto", type=['jpg', 'png', 'jpeg'])
     
-    if st.button("SALVAR"):
+    if st.button("SALVAR RECEITA"):
         if nome and conteudo:
             foto_b64 = converter_imagem(foto_upload)
             salvar_receita(nome, cat, tempo, conteudo, foto_b64)
@@ -161,7 +169,7 @@ st.divider()
 
 # --- BUSCA ---
 df = listar_receitas()
-busca = st.text_input("🔍 BUSCAR...")
+busca = st.text_input("🔍 BUSCAR RECEITA...")
 
 if not df.empty:
     mask = df['nome'].str.contains(busca, case=False) | df['conteudo'].str.contains(busca, case=False)
@@ -173,7 +181,6 @@ if not df.empty:
             <h3>{row['nome']}</h3>
         </div>""", unsafe_allow_html=True)
 
-        # Colunas de ação compactas
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -198,4 +205,4 @@ if not df.empty:
                     excluir_receita(rid)
                     st.rerun()
 else:
-    st.info("Caderno vazio.")
+    st.info("O caderno está vazio.")
