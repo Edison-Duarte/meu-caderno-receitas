@@ -46,17 +46,43 @@ def listar_receitas():
 
 init_db()
 
-# --- ESTILO VISUAL AMIGÁVEL ---
+# --- ESTILO VISUAL (Fundo Rosa Claro) ---
 st.markdown("""
     <style>
-    .main { background-color: #fdfcfb; }
-    h1 { color: #d35400 !important; text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .recipe-card {
-        padding: 20px; border-radius: 15px; background-color: #ffffff;
-        border-left: 6px solid #e67e22; margin-bottom: 15px;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    /* Cor de fundo da página inteira */
+    .stApp {
+        background-color: #ffe4e1; /* Misty Rose */
     }
-    .stButton>button { border-radius: 20px; }
+    
+    /* Estilo do título principal */
+    h1 { 
+        color: #b03060 !important; /* Maroon/Vinho */
+        text-align: center; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: bold;
+    }
+
+    /* Estilo dos cards das receitas */
+    .recipe-card {
+        padding: 20px; 
+        border-radius: 15px; 
+        background-color: #ffffff;
+        border-left: 6px solid #ffb6c1; /* Light Pink */
+        margin-bottom: 15px;
+        box-shadow: 3px 3px 12px rgba(0,0,0,0.05);
+    }
+    
+    /* Botões arredondados */
+    .stButton>button {
+        border-radius: 20px;
+        background-color: #ffb6c1;
+        color: white;
+    }
+    
+    /* Ajuste para o texto nos campos de busca */
+    .stTextInput>div>div>input {
+        background-color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -82,7 +108,7 @@ st.divider()
 
 # --- BUSCA E LISTAGEM ---
 df = listar_receitas()
-busca = st.text_input("🔍 O que você está procurando hoje?", placeholder="Ex: Bolo, frango, chocolate...")
+busca = st.text_input("🔍 O que você quer cozinhar hoje, Marcia?", placeholder="Ex: Bolo, torta...")
 
 if not df.empty:
     mask = df['nome'].str.contains(busca, case=False) | df['conteudo'].str.contains(busca, case=False)
@@ -91,8 +117,8 @@ if not df.empty:
         
         st.markdown(f"""
         <div class="recipe-card">
-            <h3 style='margin:0; color:#d35400;'>🍴 {row['nome']}</h3>
-            <span style='color: #7f8c8d;'>{row['categoria']} | ⏳ {row['tempo']}</span>
+            <h3 style='margin:0; color:#b03060;'>🌸 {row['nome']}</h3>
+            <span style='color: #888;'>{row['categoria']} | ⏳ {row['tempo']}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -111,13 +137,13 @@ if not df.empty:
             e_tmp = st.text_input("Tempo", value=row['tempo'], key=f"et_{rid}")
             e_cont = st.text_area("Preparo", value=row['conteudo'], height=200, key=f"ect_{rid}")
             
-            if st.button("✅ Salvar Alteração", key=f"btn_ed_{rid}"):
+            if st.button("✅ Atualizar", key=f"btn_ed_{rid}"):
                 atualizar_receita(rid, e_nome, e_cat, e_tmp, e_cont)
                 st.rerun()
 
         with col3.expander("🗑️ Excluir"):
-            if st.button("Confirmar Exclusão", key=f"del_{rid}"):
+            if st.button("Apagar", key=f"del_{rid}"):
                 excluir_receita(rid)
                 st.rerun()
 else:
-    st.info("O seu caderno ainda está vazio. Adicione uma receita acima!")
+    st.info("O seu caderno está esperando por receitas deliciosas!")
