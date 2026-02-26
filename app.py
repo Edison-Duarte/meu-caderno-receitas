@@ -12,7 +12,6 @@ st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layo
 def init_db():
     conn = sqlite3.connect('receitas_marcia_fotos.db')
     c = conn.cursor()
-    # Adicionada a coluna 'foto' do tipo TEXT
     c.execute('''CREATE TABLE IF NOT EXISTS receitas 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                   nome TEXT, categoria TEXT, tempo TEXT, conteudo TEXT, foto TEXT)''')
@@ -52,7 +51,6 @@ def listar_receitas():
     conn.close()
     return df
 
-# Função para converter imagem para base64
 def converter_imagem(img_file):
     if img_file:
         img = Image.open(img_file)
@@ -67,10 +65,27 @@ init_db()
 st.markdown("""
     <style>
     .stApp { background-color: #ffe4e1; }
-    .main-title { 
-        color: #4a4a4a; font-family: sans-serif; font-weight: 800; font-size: 2.2rem;
-        display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;
+    
+    /* Centralização absoluta do título */
+    .main-title-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        gap: 15px;
+        margin-top: 10px;
+        margin-bottom: 25px;
     }
+    
+    .main-title-text { 
+        color: #4a4a4a; 
+        font-family: sans-serif; 
+        font-weight: 800; 
+        font-size: 2.2rem;
+        margin: 0;
+        text-align: center;
+    }
+    
     .recipe-card {
         background-color: #ffffff; padding: 20px; border-radius: 10px;
         border-left: 6px solid #d1478a; margin-bottom: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -79,20 +94,27 @@ st.markdown("""
         background-color: #f0f0f0; color: #555; padding: 2px 8px;
         border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase;
     }
-    img { border-radius: 8px; margin-top: 10px; }
+    img { border-radius: 8px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown("""<div class="main-title"><span>👩‍🍳</span><span>Caderno de Receitas da Marcia</span><span>🍴</span></div>""", unsafe_allow_html=True)
+# --- TÍTULO CENTRALIZADO ---
+st.markdown("""
+    <div class="main-title-container">
+        <span style="font-size: 2.2rem;">👩‍🍳</span>
+        <h1 class="main-title-text">Caderno de Receitas da Marcia</h1>
+        <span style="font-size: 2.2rem;">🍴</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- CADASTRO ---
-with st.expander("📥 Cadastrar Nova Receita com Foto", expanded=False):
+with st.expander("📥 Cadastrar Nova Receita", expanded=False):
     nome = st.text_input("Nome da Receita")
     c1, c2 = st.columns(2)
     cat = c1.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Saudável"])
     tempo = c2.text_input("Tempo de Preparo")
     conteudo = st.text_area("Ingredientes e Modo de Preparo", height=100)
-    foto_upload = st.file_uploader("Escolha uma foto do prato", type=['jpg', 'png', 'jpeg'])
+    foto_upload = st.file_uploader("Adicionar foto do prato", type=['jpg', 'png', 'jpeg'])
     
     if st.button("Salvar no Caderno"):
         if nome and conteudo:
@@ -112,9 +134,11 @@ if not df.empty:
     for idx, row in df[mask].iterrows():
         rid = row['id']
         
-        st.markdown(f"""<div class="recipe-card"><span class="category-badge">{row['categoria']}</span>
+        st.markdown(f"""<div class="recipe-card">
+            <span class="category-badge">{row['categoria']}</span>
             <h3 style='margin: 8px 0 4px 0; color: #333;'>{row['nome']}</h3>
-            <p style='color: #888; font-size: 14px; margin: 0;'>⏱ {row['tempo']}</p></div>""", unsafe_allow_html=True)
+            <p style='color: #888; font-size: 14px; margin: 0;'>⏱ {row['tempo']}</p>
+        </div>""", unsafe_allow_html=True)
 
         c1, c2, c3 = st.columns(3)
         
