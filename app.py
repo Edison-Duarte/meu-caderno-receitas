@@ -51,13 +51,25 @@ def listar_receitas():
     conn.close()
     return df
 
+# --- FUNÇÃO DE CONVERSÃO COM OTIMIZAÇÃO DE MEMÓRIA ---
 def converter_imagem(img_file):
     if img_file:
-        img = Image.open(img_file)
-        img.thumbnail((500, 500))
-        buffer = BytesIO()
-        img.save(buffer, format="JPEG", quality=80)
-        return base64.b64encode(buffer.getvalue()).decode()
+        try:
+            img = Image.open(img_file)
+            # Converte para RGB (necessário para JPEG se a foto for PNG)
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            
+            # Redimensiona para um tamanho máximo de 600px (ideal para celular)
+            img.thumbnail((600, 600))
+            
+            buffer = BytesIO()
+            # Salva como JPEG com compressão para ocupar pouquíssima memória
+            img.save(buffer, format="JPEG", quality=60, optimize=True)
+            return base64.b64encode(buffer.getvalue()).decode()
+        except Exception as e:
+            st.error(f"Erro ao processar imagem: {e}")
+            return None
     return None
 
 init_db()
@@ -65,81 +77,31 @@ init_db()
 # --- ESTILO DARK PURPLE & PINK ---
 st.markdown("""
     <style>
-    /* Fundo Roxo Profundo */
-    .stApp { 
-        background-color: #0f0a1a; 
-        color: #e0d0f0; 
-    }
-    
-    /* CORREÇÃO DE POSICIONAMENTO DO TOPO */
-    .block-container {
-        padding-top: 4rem !important;
-        padding-left: 0.6rem !important;
-        padding-right: 0.6rem !important;
-    }
-
-    /* Título em Lilás/Rosa Neon */
+    .stApp { background-color: #0f0a1a; color: #e0d0f0; }
+    .block-container { padding-top: 4rem !important; padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
     .main-title-text { 
-        color: #ff79c6; /* Rosa Choque */
-        font-family: 'Segoe UI', sans-serif; 
-        font-weight: 800; 
-        font-size: clamp(1.2rem, 6vw, 1.8rem); 
-        text-align: center;
-        margin-bottom: 25px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        text-shadow: 0px 0px 10px rgba(255, 121, 198, 0.3);
+        color: #ff79c6; font-family: sans-serif; font-weight: 800; 
+        font-size: clamp(1.2rem, 6vw, 1.8rem); text-align: center; margin-bottom: 25px;
+        text-transform: uppercase; letter-spacing: 1px;
     }
-    
-    /* Cards Escuros com Borda Lilás */
     .recipe-card {
-        background-color: #1a1425; 
-        padding: 14px; 
-        border-radius: 12px;
-        border: 1px solid #3d2b52;
-        border-left: 5px solid #bd93f9; /* Lilás */
-        margin-bottom: 10px; 
+        background-color: #1a1425; padding: 14px; border-radius: 12px;
+        border: 1px solid #3d2b52; border-left: 5px solid #bd93f9; margin-bottom: 10px; 
     }
-    
-    .recipe-card h3 {
-        font-size: 16px !important;
-        color: #f8f8f2 !important;
-        margin: 4px 0 !important;
-    }
-
-    /* Botões em Gradiente Roxo/Rosa */
+    .recipe-card h3 { font-size: 16px !important; color: #f8f8f2 !important; margin: 4px 0 !important; }
     .stButton>button {
-        width: 100%;
-        border-radius: 8px !important;
+        width: 100%; border-radius: 8px !important;
         background: linear-gradient(45deg, #bd93f9, #ff79c6) !important;
-        color: #ffffff !important;
-        border: none !important;
-        height: 45px;
-        font-size: 14px;
-        font-weight: bold;
-        text-transform: uppercase;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        color: #ffffff !important; border: none !important; height: 45px;
+        font-size: 14px; font-weight: bold; text-transform: uppercase;
     }
-
-    /* Campos de Input */
-    input, textarea, select {
-        background-color: #282a36 !important;
-        color: white !important;
-        border: 1px solid #44475a !important;
-    }
-    
-    .category-text {
-        font-size: 10px; 
-        color: #bd93f9; 
-        font-weight: bold; 
-    }
-
+    input, textarea, select { background-color: #282a36 !important; color: white !important; border: 1px solid #44475a !important; }
+    .category-text { font-size: 10px; color: #bd93f9; font-weight: bold; }
     footer {display:none !important;}
     #MainMenu {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- TÍTULO ---
 st.markdown('<h1 class="main-title-text">Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
@@ -149,12 +111,16 @@ with st.expander("💜 ADICIONAR NOVA DELÍCIA", expanded=False):
     cat = c1.selectbox("Tipo", ["Salgado", "Doce", "Bebida", "Saudável"])
     tempo = c2.text_input("Tempo")
     conteudo = st.text_area("Ingredientes e Preparo", height=150)
-    foto_upload = st.file_uploader("Foto", type=['jpg', 'png', 'jpeg'])
+    
+    # Limite visual de upload
+    foto_upload = st.file_uploader("Foto (o app vai reduzir o tamanho automaticamente)", type=['jpg', 'png', 'jpeg'])
     
     if st.button("SALVAR NO CADERNO"):
         if nome and conteudo:
-            foto_b64 = converter_imagem(foto_upload)
-            salvar_receita(nome, cat, tempo, conteudo, foto_b64)
+            with st.spinner('Otimizando foto...'):
+                foto_b64 = converter_imagem(foto_upload)
+                salvar_receita(nome, cat, tempo, conteudo, foto_b64)
+            st.success("Receita salva com sucesso!")
             st.rerun()
 
 st.divider()
@@ -164,34 +130,29 @@ df = listar_receitas()
 busca = st.text_input("🔍 PESQUISAR...")
 
 if not df.empty:
-    # Filtragem
     mask = df['nome'].str.contains(busca, case=False) | df['conteudo'].str.contains(busca, case=False)
     for idx, row in df[mask].iterrows():
         rid = row['id']
-        
         st.markdown(f"""<div class="recipe-card">
             <div class="category-text">{row['categoria']} • {row['tempo']}</div>
             <h3>{row['nome']}</h3>
         </div>""", unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns(3)
-        
         with col1:
             with st.expander("VER"):
                 if row['foto']:
                     st.image(base64.b64decode(row['foto']), use_container_width=True)
                 st.write(row['conteudo'])
-
         with col2:
             with st.expander("ED"):
                 e_nome = st.text_input("Nome", value=row['nome'], key=f"en_{rid}")
                 e_cont = st.text_area("Preparo", value=row['conteudo'], height=150, key=f"ect_{rid}")
-                e_foto = st.file_uploader("Trocar", type=['jpg', 'png'], key=f"ef_{rid}")
+                e_foto = st.file_uploader("Trocar foto", type=['jpg', 'png'], key=f"ef_{rid}")
                 if st.button("OK", key=f"btn_ed_{rid}"):
                     nova_foto = converter_imagem(e_foto)
                     atualizar_receita(rid, e_nome, row['categoria'], row['tempo'], e_cont, nova_foto)
                     st.rerun()
-
         with col3:
             with st.expander("EX"):
                 if st.button("SIM", key=f"del_{rid}"):
