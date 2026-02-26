@@ -66,24 +66,17 @@ st.markdown("""
     <style>
     .stApp { background-color: #ffe4e1; }
     
-    /* Centralização absoluta do título */
-    .main-title-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        gap: 15px;
-        margin-top: 10px;
-        margin-bottom: 25px;
-    }
-    
+    /* Título em linha única e centralizado */
     .main-title-text { 
         color: #4a4a4a; 
-        font-family: sans-serif; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         font-weight: 800; 
-        font-size: 2.2rem;
-        margin: 0;
+        font-size: 2.5rem;
         text-align: center;
+        width: 100%;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        white-space: nowrap; /* Garante que fique em uma linha só */
     }
     
     .recipe-card {
@@ -98,14 +91,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- TÍTULO CENTRALIZADO ---
-st.markdown("""
-    <div class="main-title-container">
-        <span style="font-size: 2.2rem;">👩‍🍳</span>
-        <h1 class="main-title-text">Caderno de Receitas da Marcia</h1>
-        <span style="font-size: 2.2rem;">🍴</span>
-    </div>
-    """, unsafe_allow_html=True)
+# --- TÍTULO ---
+st.markdown('<h1 class="main-title-text">Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
 with st.expander("📥 Cadastrar Nova Receita", expanded=False):
