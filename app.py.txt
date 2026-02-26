@@ -1,0 +1,121 @@
+import streamlit as st
+import sqlite3
+import pandas as pd
+
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="Chef Digital Permanente", page_icon="📖", layout="centered")
+
+# --- FUNÇÕES DO BANCO DE DATAS (SQLite) ---
+def init_db():
+    conn = sqlite3.connect('receitas.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS receitas 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  nome TEXT, categoria TEXT, tempo TEXT, conteudo TEXT)''')
+    conn.commit()
+    conn.close()
+
+def salvar_receita(nome, categoria, tempo, conteudo):
+    conn = sqlite3.connect('receitas.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO receitas (nome, categoria, tempo, conteudo) VALUES (?, ?, ?, ?)", 
+              (nome, categoria, tempo, conteudo))
+    conn.commit()
+    conn.close()
+
+def listar_receitas():
+    conn = sqlite3.connect('receitas.db')
+    df = pd.read_sql_query("SELECT * FROM receitas", conn)
+    conn.close()
+    return df
+
+def excluir_todas():
+    conn = sqlite3.connect('receitas.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM receitas")
+    conn.commit()
+    conn.close()
+
+# Inicializa o banco ao abrir o app
+init_db()
+
+# --- ESTILO VISUAL ---
+st.markdown("""
+    <style>
+    .main { background-color: #fffaf0; }
+    .stButton>button { border-radius: 8px; font-weight: bold; }
+    .recipe-box {
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #ffffff;
+        border: 2px solid #ffccbc;
+        margin-bottom: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- INTERFACE ---
+st.title("👨‍🍳 Meu Livro de Receitas Eterno")
+st.write("Suas receitas agora ficam salvas mesmo se você fechar o navegador!")
+
+# Sidebar com estatísticas e limpeza
+with st.sidebar:
+    st.header("📊 Seu Acervo")
+    df_atual = listar_receitas()
+    st.metric("Total de Receitas", len(df_atual))
+    
+    if st.button("🚨 Apagar TUDO"):
+        excluir_todas()
+        st.success("Banco de dados limpo!")
+        st.rerun()
+
+# --- CADASTRO ---
+with st.expander("➕ Adicionar Nova Receita (Ctrl+V liberado!)", expanded=False):
+    nome = st.text_input("Nome do Prato")
+    c1, c2 = st.columns(2)
+    cat = c1.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Fit"])
+    tmp = c2.text_input("Tempo", placeholder="Ex: 15 min")
+    cont = st.text_area("Ingredientes e Modo de Preparo", height=200)
+    
+    if st.button("💾 Salvar Permanentemente"):
+        if nome and cont:
+            salvar_receita(nome, cat, tmp, cont)
+            st.balloons()
+            st.success("Salvo com sucesso no banco de dados!")
+            st.rerun()
+        else:
+            st.error("Preencha o nome e o conteúdo!")
+
+st.divider()
+
+# --- BUSCA E EXIBIÇÃO ---
+busca = st.text_input("🔍 Procurar receita...", placeholder="Digite um nome ou ingrediente")
+
+if not df_atual.empty:
+    # Filtro simples usando Pandas
+    mask = df_atual['nome'].str.contains(busca, case=False) | df_atual['conteudo'].str.contains(busca, case=False)
+    resultados = df_atual[mask]
+
+    for index, row in resultados.iterrows():
+        with st.container():
+            st.markdown(f"""
+            <div class="recipe-box">
+                <h3 style='color: #e64a19; margin-top:0;'>🍴 {row['nome']}</h3>
+                <span style='background:#ffe0b2; padding:3px 8px; border-radius:5px;'>{row['categoria']}</span>
+                <span style='margin-left:10px;'>⏱️ {row['tempo']}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.expander("📖 Ver Modo de Preparo"):
+                st.write(row['conteudo'])
+                
+                # Botão de Exportar Individual
+                txt_data = f"RECEITA: {row['nome']}\nCAT: {row['categoria']}\n\n{row['conteudo']}"
+                st.download_button(
+                    label="📥 Baixar TXT",
+                    data=txt_data,
+                    file_name=f"{row['nome']}.txt",
+                    key=f"btn_{row['id']}"
+                )
+else:
+    st.info("Nenhuma receita cadastrada ainda. Vamos cozinhar?")
