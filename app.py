@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layout="centered")
+st.set_page_config(page_title="Caderno da Marcia", page_icon="📝", layout="centered")
 
 # --- FUNÇÕES DO BANCO DE DADOS ---
 def init_db():
@@ -46,115 +46,106 @@ def listar_receitas():
 
 init_db()
 
-# --- ESTILO VISUAL "COZINHA DA MARCIA" ---
+# --- ESTILO VISUAL EQUILIBRADO (Rosa + Neutro) ---
 st.markdown("""
     <style>
-    /* Fundo da página */
     .stApp {
-        background: linear-gradient(to bottom, #fff0f5, #ffe4e1);
+        background-color: #ffe4e1; /* O rosa que você gostou */
     }
     
-    /* Título com fonte elegante */
     h1 { 
-        color: #d147a3 !important; 
-        font-family: 'Dancing Script', cursive; 
-        font-size: 3rem !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        padding-bottom: 20px;
+        color: #4a4a4a !important; 
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 800;
+        text-align: center;
     }
 
-    /* Estilo dos Cards de Receita */
     .recipe-card {
-        background-color: white;
-        padding: 25px;
-        border-radius: 20px;
-        border: none;
-        box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4);
-        margin-bottom: 20px;
-        transition: transform 0.3s;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #d1478a; 
+        margin-bottom: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     
-    /* Botões */
     .stButton>button {
-        border-radius: 30px !important;
-        background-color: #ff69b4 !important;
+        border-radius: 5px !important;
+        background-color: #d1478a !important;
         color: white !important;
         border: none !important;
-        padding: 0.5rem 2rem !important;
-        font-weight: bold;
     }
-    
-    /* Input de texto */
-    .stTextInput>div>div>input {
-        border-radius: 15px;
-        border: 2px solid #ffb6c1;
+
+    .category-badge {
+        background-color: #f0f0f0;
+        color: #555;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
     }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     """, unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
 st.markdown("<h1>Caderno de Receitas da Marcia</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #b03060;'>💖 Onde cada ingrediente vira amor!</p>", unsafe_allow_html=True)
 
-# --- ÁREA DE CADASTRO ---
-with st.expander("✨ Registrar Nova Receita Mágica", expanded=False):
-    nome = st.text_input("Nome da Delícia")
+# --- CADASTRO ---
+with st.expander("📥 Cadastrar Nova Receita", expanded=False):
+    nome = st.text_input("Nome da Receita")
     col1, col2 = st.columns(2)
-    cat = col1.selectbox("Tipo", ["🍰 Doce", "🍝 Salgado", "🍹 Bebida", "🥗 Saudável"])
-    tempo = col2.text_input("🕒 Tempo (ex: 45 min)")
-    conteudo = st.text_area("📖 Modo de Preparo e Ingredientes (Ctrl+V liberado!)", height=150)
+    cat = col1.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Saudável"])
+    tempo = col2.text_input("Tempo de Preparo")
+    conteudo = st.text_area("Ingredientes e Modo de Preparo", height=150)
     
-    if st.button("💝 Guardar no Caderno"):
+    if st.button("Salvar no Caderno"):
         if nome and conteudo:
             salvar_receita(nome, cat, tempo, conteudo)
-            st.toast("Receita salva com sucesso! 🎉")
             st.rerun()
 
 st.write("---")
 
 # --- BUSCA ---
 df = listar_receitas()
-busca = st.text_input("🔍 Procurar um sabor especial...", placeholder="Ex: Chocolate, Lasanha...")
+busca = st.text_input("🔍 Pesquisar receitas...", placeholder="Busque por nome ou ingrediente")
 
-# --- EXIBIÇÃO ---
+# --- LISTAGEM ---
 if not df.empty:
     mask = df['nome'].str.contains(busca, case=False) | df['conteudo'].str.contains(busca, case=False)
     for idx, row in df[mask].iterrows():
         rid = row['id']
         
-        # Card Visual
+        # Card com visual limpo
         st.markdown(f"""
         <div class="recipe-card">
-            <h2 style='margin:0; color:#d147a3;'>{row['nome']}</h2>
-            <p style='color:#7f8c8d; font-size:14px;'>{row['categoria']} • ⏳ {row['tempo']}</p>
+            <span class="category-badge">{row['categoria']}</span>
+            <h3 style='margin: 10px 0 5px 0; color: #333;'>{row['nome']}</h3>
+            <p style='color: #777; font-size: 14px; margin: 0;'>⏱ {row['tempo']}</p>
         </div>
         """, unsafe_allow_html=True)
 
-        # Ações
         c1, c2, c3 = st.columns(3)
         
-        with c1.expander("👀 Ver Detalhes"):
-            st.markdown(f"### 👩‍🍳 Como fazer:")
+        with c1.expander("📄 Ver"):
             st.write(row['conteudo'])
-            st.download_button("📂 Baixar Receita", f"RECEITA: {row['nome']}\n\n{row['conteudo']}", f"{row['nome']}.txt", key=f"dl_{rid}")
+            st.download_button("Exportar TXT", f"{row['nome']}\n\n{row['conteudo']}", f"{row['nome']}.txt", key=f"dl_{rid}")
 
-        with c2.expander("✏️ Editar"):
-            e_nome = st.text_input("Editar Nome", value=row['nome'], key=f"en_{rid}")
-            e_cat = st.selectbox("Mudar Tipo", ["🍰 Doce", "🍝 Salgado", "🍹 Bebida", "🥗 Saudável"], 
-                                index=["🍰 Doce", "🍝 Salgado", "🍹 Bebida", "🥗 Saudável"].index(row['categoria']), 
+        with c2.expander("⚙️ Editar"):
+            e_nome = st.text_input("Nome", value=row['nome'], key=f"en_{rid}")
+            e_cat = st.selectbox("Categoria", ["Salgado", "Doce", "Bebida", "Saudável"], 
+                                index=["Salgado", "Doce", "Bebida", "Saudável"].index(row['categoria']), 
                                 key=f"ec_{rid}")
-            e_tmp = st.text_input("Mudar Tempo", value=row['tempo'], key=f"et_{rid}")
-            e_cont = st.text_area("Mudar Preparo", value=row['conteudo'], height=200, key=f"ect_{rid}")
-            if st.button("💾 Atualizar", key=f"btn_ed_{rid}"):
+            e_tmp = st.text_input("Tempo", value=row['tempo'], key=f"et_{rid}")
+            e_cont = st.text_area("Preparo", value=row['conteudo'], height=200, key=f"ect_{rid}")
+            if st.button("Atualizar", key=f"btn_ed_{rid}"):
                 atualizar_receita(rid, e_nome, e_cat, e_tmp, e_cont)
                 st.rerun()
 
-        with c3.expander("🗑️ Remover"):
-            st.write("Deseja apagar esta receita?")
-            if st.button("⚠️ Confirmar", key=f"del_{rid}"):
+        with c3.expander("❌ Excluir"):
+            if st.button("Remover", key=f"del_{rid}"):
                 excluir_receita(rid)
                 st.rerun()
         st.write("") 
 else:
-    st.info("Ainda não há receitas. Comece colando uma ali em cima! 🌸")
+    st.info("Nenhuma receita cadastrada.")
