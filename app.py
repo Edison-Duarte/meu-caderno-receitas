@@ -16,7 +16,7 @@ except Exception as e:
     st.stop()
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layout="centered")
+st.set_page_config(page_title="Caderno de Receitas da Marcia", page_icon="👩‍🍳", layout="centered")
 
 # --- FUNÇÕES DO BANCO DE DADOS ---
 def salvar_receita(nome, categoria, tempo, ingredientes, conteudo, foto_base64):
@@ -70,7 +70,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">👩‍🍳 Caderno da Márcia</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">👩‍🍳 Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
 with st.expander("💜 ADICIONAR NOVA RECEITA", expanded=False):
@@ -137,3 +137,4 @@ if not df.empty:
                     st.rerun()
 else:
     st.info("Caderno vazio! ✨")
+
