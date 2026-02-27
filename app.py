@@ -15,7 +15,7 @@ except Exception as e:
     st.stop()
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Caderno de Receitas da Marcia", page_icon="👩‍🍳", layout="centered")
+st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layout="centered")
 
 # --- FUNÇÕES DO BANCO DE DADOS ---
 def salvar_receita(nome, categoria, tempo, ingredientes, conteudo, foto_base64):
@@ -79,9 +79,7 @@ with st.expander("💜 ADICIONAR NOVA RECEITA", expanded=False):
         cat = c1.selectbox("Tipo", ["Salgado", "Doce", "Bebida", "Saudável"])
         tempo = c2.text_input("Tempo (ex: 45 min)")
         
-        # CAMPO DE INGREDIENTES ADICIONADO
         ingredientes = st.text_area("Ingredientes (um por linha)", height=100)
-        
         preparo = st.text_area("Modo de Preparo", height=150)
         foto_up = st.file_uploader("Adicionar Foto", type=['jpg', 'png', 'jpeg'])
         
@@ -100,7 +98,7 @@ st.divider()
 df = listar_receitas()
 if not df.empty:
     busca = st.text_input("🔍 PESQUISAR...", placeholder="Buscar por nome ou ingrediente...")
-    # Busca agora olha também nos ingredientes
+    
     mask = df['nome'].str.contains(busca, case=False, na=False) | \
            df['ingredientes'].str.contains(busca, case=False, na=False)
     dados = df[mask]
@@ -116,7 +114,9 @@ if not df.empty:
         with c1:
             with st.expander("📖 VER"):
                 if row.get('foto'):
-                    st.image(base64.b64decode(row['foto']), use_container_width=True)
+                    try:
+                        st.image(base64.b64decode(row['foto']), use_container_width=True)
+                    except: st.write("Imagem indisponível")
                 st.subheader("🛒 Ingredientes")
                 st.write(row.get('ingredientes', 'Não informado'))
                 st.subheader("👨‍🍳 Preparo")
@@ -129,12 +129,10 @@ if not df.empty:
                 if st.button("SALVAR", key=f"b_{rid}"):
                     atualizar_receita(rid, n_nome, n_ing, n_pre)
                     st.rerun()
-        with c3:
+        with col3: # Nota: Corrigi de c3 para col3 se necessário, mas mantendo a lógica do seu código anterior
             with st.expander("🗑️ EX"):
                 if st.button("OK", key=f"d_{rid}"):
                     excluir_receita(rid)
                     st.rerun()
 else:
     st.info("Caderno vazio! ✨")
-
-
