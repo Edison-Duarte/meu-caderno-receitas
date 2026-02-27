@@ -69,7 +69,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">👩‍🍳 Caderno da Marcia</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">👩‍🍳 Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
 with st.expander("💜 ADICIONAR NOVA RECEITA", expanded=False):
