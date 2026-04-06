@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import base64
@@ -16,7 +15,7 @@ except Exception as e:
     st.stop()
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Caderno de Receitas da Marcia", page_icon="👩‍🍳", layout="centered")
+st.set_page_config(page_title="Caderno da Marcia", page_icon="👩‍🍳", layout="centered")
 
 # --- FUNÇÕES DO BANCO DE DADOS ---
 def salvar_receita(nome, categoria, tempo, ingredientes, conteudo, foto_base64):
@@ -70,7 +69,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">👩‍🍳 Caderno de Receitas da Marcia</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">👩‍🍳 Caderno da Marcia</h1>', unsafe_allow_html=True)
 
 # --- CADASTRO ---
 with st.expander("💜 ADICIONAR NOVA RECEITA", expanded=False):
@@ -80,9 +79,7 @@ with st.expander("💜 ADICIONAR NOVA RECEITA", expanded=False):
         cat = c1.selectbox("Tipo", ["Salgado", "Doce", "Bebida", "Saudável"])
         tempo = c2.text_input("Tempo (ex: 45 min)")
         
-        # CAMPO DE INGREDIENTES ADICIONADO
         ingredientes = st.text_area("Ingredientes (um por linha)", height=100)
-        
         preparo = st.text_area("Modo de Preparo", height=150)
         foto_up = st.file_uploader("Adicionar Foto", type=['jpg', 'png', 'jpeg'])
         
@@ -101,6 +98,7 @@ st.divider()
 df = listar_receitas()
 if not df.empty:
     busca = st.text_input("🔍 PESQUISAR...", placeholder="Buscar por nome ou ingrediente...")
+    
     # Busca agora olha também nos ingredientes
     mask = df['nome'].str.contains(busca, case=False, na=False) | \
            df['ingredientes'].str.contains(busca, case=False, na=False)
@@ -116,8 +114,14 @@ if not df.empty:
         c1, c2, c3 = st.columns(3)
         with c1:
             with st.expander("📖 VER"):
-                if row.get('foto'):
-                    st.image(base64.b64decode(row['foto']), use_container_width=True)
+                # Proteção para receitas sem foto
+                foto_dados = row.get('foto')
+                if foto_dados and isinstance(foto_dados, str) and len(foto_dados) > 10:
+                    try:
+                        st.image(base64.b64decode(foto_dados), use_container_width=True)
+                    except:
+                        st.info("📷 (Imagem indisponível)")
+                
                 st.subheader("🛒 Ingredientes")
                 st.write(row.get('ingredientes', 'Não informado'))
                 st.subheader("👨‍🍳 Preparo")
@@ -137,4 +141,3 @@ if not df.empty:
                     st.rerun()
 else:
     st.info("Caderno vazio! ✨")
-
